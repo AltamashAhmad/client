@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
     const [seatCount, setSeatCount] = useState('');
     const [previewSeats, setPreviewSeats] = useState([]);
+    const [showResetModal, setShowResetModal] = useState(false);
 
     const findBestAvailableSeats = useCallback((count) => {
         const seatsByRow = seats.reduce((acc, seat) => {
@@ -84,15 +85,50 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
         }
     };
 
+    const ResetConfirmationModal = () => {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                        Reset All Bookings
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                        Are you sure you want to reset all bookings? This action cannot be undone.
+                    </p>
+                    <div className="flex space-x-4 justify-between">
+                        <button
+                            onClick={() => setShowResetModal(false)}
+                            className="w-1/2 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                onResetAllBookings();
+                                setShowResetModal(false);
+                                setSeatCount('');
+                                setPreviewSeats([]);
+                            }}
+                            className="w-1/2 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                            Reset All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-800 to-black py-12 px-4 sm:px-6 lg:px-8">
+            {showResetModal && <ResetConfirmationModal />}
             <div className="max-w-6xl w-full space-y-8 bg-white p-8 rounded-xl shadow-2xl">
                 <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-extrabold text-gray-900">
                         Train Ticket Booking
                     </h2>
                     <button
-                        onClick={handleResetAllBookings}
+                        onClick={() => setShowResetModal(true)}
                         className="bg-red-500 text-white px-4 py-2 rounded-md text-sm hover:bg-red-600 transition-colors"
                     >
                         Reset All Bookings
@@ -159,7 +195,7 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm 
                                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                                              text-lg font-medium text-black placeholder-gray-400"
-                                    placeholder="Enter number (1-7)"
+                                    placeholder="Enter number of seats (1-7)"
                                 />
                                 {seatCount && (parseInt(seatCount) < 1 || parseInt(seatCount) > 7) && (
                                     <p className="mt-2 text-sm text-red-600 font-medium">
