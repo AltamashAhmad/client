@@ -7,6 +7,7 @@ export default function Footer() {
                     Altamash Ahmad
                 </span>
             </p>
+            
         </footer>
     );
 } 
