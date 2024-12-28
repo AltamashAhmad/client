@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
     const [seatCount, setSeatCount] = useState('');
@@ -137,6 +138,39 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
         );
     };
 
+    // Calculate available seats once and store in a variable
+    const getAvailableSeatsCount = () => {
+        return seats.filter(seat => !seat.is_booked).length;
+    };
+
+    const handleSeatCountChange = (e) => {
+        const value = e.target.value;
+        const availableSeatsCount = getAvailableSeatsCount();
+
+        if (value === '') {
+            setSeatCount('');
+            return;
+        }
+
+        const numSeats = parseInt(value);
+        if (numSeats > 7) {
+            toast.error('You can only book up to 7 seats at a time');
+            return;
+        }
+
+        if (numSeats > availableSeatsCount) {
+            toast.error(`Only ${availableSeatsCount} seats available`);
+            return;
+        }
+
+        if (numSeats >= 1 && numSeats <= 7) {
+            setSeatCount(value);
+        }
+    };
+
+    // Get available seats count for rendering
+    const availableSeatsCount = getAvailableSeatsCount();
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-800 to-black py-12 px-4 sm:px-6 lg:px-8">
             {showResetModal && <ResetConfirmationModal />}
@@ -196,28 +230,28 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
                         </h3>
                         
                         <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Number of Seats:
-                                </label>
+                            <div className="space-y-2">
                                 <input 
-                                    type="text"
-                                    pattern="[1-7]"
+                                    type="number"
+                                    min="1"
+                                    max="7"
                                     value={seatCount}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 7)) {
-                                            setSeatCount(value);
-                                        }
-                                    }}
+                                    onChange={handleSeatCountChange}
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm 
-                                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                             text-lg font-medium text-black placeholder-gray-400"
+                                        focus:border-blue-500 focus:ring-1 focus:ring-blue-500 
+                                        placeholder-gray-400 text-black"
                                     placeholder="Enter number of seats (1-7)"
+                                    disabled={availableSeatsCount === 0}
                                 />
-                                {seatCount && (parseInt(seatCount) < 1 || parseInt(seatCount) > 7) && (
-                                    <p className="mt-2 text-sm text-red-600 font-medium">
-                                        Please enter a number between 1 and 7
+                                
+                                {/* Status Messages */}
+                                {availableSeatsCount === 0 ? (
+                                    <p className="text-red-500 text-sm font-medium">
+                                        No seats available. Please try again later.
+                                    </p>
+                                ) : (
+                                    <p className="text-gray-600 text-sm">
+                                        {availableSeatsCount} seats available. You can book up to {Math.min(7, availableSeatsCount)} seats.
                                     </p>
                                 )}
                             </div>
