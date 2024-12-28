@@ -11,6 +11,13 @@ export default function Booking() {
     const router = useRouter();
 
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.replace('/login');
+        }
+    }, [router]);
+
+    useEffect(() => {
         if (!user) {
             router.replace('/login');
             return;
@@ -75,12 +82,8 @@ export default function Booking() {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await logout(); // Wait for logout to complete
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
+    const handleLogout = () => {
+        logout();
     };
 
     if (loading) {

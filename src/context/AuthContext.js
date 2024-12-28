@@ -1,9 +1,9 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -15,6 +15,12 @@ export function AuthProvider({ children }) {
             setUser({ token });
         }
         setLoading(false);
+    }, []);
+
+    const logout = useCallback(async () => {
+        setUser(null);
+        localStorage.clear();
+        window.location.href = '/login'; // Force a full redirect
     }, []);
 
     const login = async (email, password) => {
@@ -59,18 +65,12 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const logout = async () => {
-        setUser(null);
-        localStorage.clear();
-        await router.replace('/login');
-    };
-
     return (
         <AuthContext.Provider value={{ user, login, register, logout, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );
-}
+};
 
 export function useAuth() {
     return useContext(AuthContext);

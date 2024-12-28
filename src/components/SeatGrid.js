@@ -1,20 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
     const [seatCount, setSeatCount] = useState('');
     const [previewSeats, setPreviewSeats] = useState([]);
 
-    // Group seats by row
-    const seatsByRow = seats.reduce((acc, seat) => {
-        if (!acc[seat.row_number]) {
-            acc[seat.row_number] = [];
-        }
-        acc[seat.row_number].push(seat);
-        return acc;
-    }, {});
+    const findBestAvailableSeats = useCallback((count) => {
+        const seatsByRow = seats.reduce((acc, seat) => {
+            if (!acc[seat.row_number]) {
+                acc[seat.row_number] = [];
+            }
+            acc[seat.row_number].push(seat);
+            return acc;
+        }, {});
 
-    // Find best available seats
-    const findBestAvailableSeats = (count) => {
         // First try: Look for consecutive seats in a single row
         for (let row in seatsByRow) {
             const rowSeats = seatsByRow[row];
@@ -50,9 +48,8 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
         }
 
         return selectedIds.length === count ? selectedIds : [];
-    };
+    }, [seats]);
 
-    // Update preview seats whenever seat count changes
     useEffect(() => {
         if (seatCount && parseInt(seatCount) >= 1 && parseInt(seatCount) <= 7) {
             const bestSeats = findBestAvailableSeats(parseInt(seatCount));
@@ -60,7 +57,7 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
         } else {
             setPreviewSeats([]);
         }
-    }, [seatCount, seats, findBestAvailableSeats]);
+    }, [seatCount, findBestAvailableSeats]);
 
     const getSeatColor = (seat) => {
         if (seat.is_booked) return 'bg-yellow-400';
