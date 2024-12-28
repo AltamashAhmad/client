@@ -6,23 +6,21 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
     const [showResetModal, setShowResetModal] = useState(false);
 
     const findBestAvailableSeats = useCallback((count) => {
-        const seatsByRow = seats.reduce((acc, seat) => {
-            if (!acc[seat.row_number]) {
-                acc[seat.row_number] = [];
-            }
-            acc[seat.row_number].push(seat);
-            return acc;
-        }, {});
+        // Group seats by row
+        const seatsByRow = {};
+        for (let i = 1; i <= 12; i++) {
+            seatsByRow[i] = seats.filter(seat => 
+                seat.row_number === i && !seat.is_booked
+            ).sort((a, b) => a.seat_number - b.seat_number);
+        }
 
-        // First try: Look for consecutive seats in a single row
-        for (let row in seatsByRow) {
+        // First try: Find consecutive seats in same row
+        for (let row = 1; row <= 12; row++) {
             const rowSeats = seatsByRow[row];
-            const availableSeats = rowSeats.filter(seat => !seat.is_booked);
-            
-            if (availableSeats.length >= count) {
-                // Check if we have enough consecutive seats
-                for (let i = 0; i <= availableSeats.length - count; i++) {
-                    const consecutive = availableSeats.slice(i, i + count);
+            if (rowSeats.length >= count) {
+                // Check for consecutive seats
+                for (let i = 0; i <= rowSeats.length - count; i++) {
+                    const consecutive = rowSeats.slice(i, i + count);
                     if (consecutive.length === count && 
                         consecutive.every((seat, index) => 
                             index === 0 || consecutive[index - 1].seat_number === seat.seat_number - 1
@@ -33,22 +31,42 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
             }
         }
 
-        // Second try: Look for nearby seats across rows
-        let selectedIds = [];
+        // Second try: Find seats in nearby rows
+        let selectedSeats = [];
         let remainingCount = count;
-        
-        for (let row in seatsByRow) {
-            if (remainingCount === 0) break;
-            
-            const rowSeats = seatsByRow[row];
-            const availableSeats = rowSeats.filter(seat => !seat.is_booked);
-            
-            const seatsToTake = Math.min(remainingCount, availableSeats.length);
-            selectedIds = [...selectedIds, ...availableSeats.slice(0, seatsToTake).map(seat => seat.seat_id)];
-            remainingCount -= seatsToTake;
+
+        // Find best consecutive rows with enough seats
+        let bestRows = [];
+        let minRowSpan = 12;
+
+        for (let startRow = 1; startRow <= 12; startRow++) {
+            let availableCount = 0;
+            let endRow = startRow;
+            while (endRow <= 12 && availableCount < count) {
+                availableCount += seatsByRow[endRow].length;
+                endRow++;
+            }
+            if (availableCount >= count && (endRow - startRow) < minRowSpan) {
+                minRowSpan = endRow - startRow;
+                bestRows = Array.from(
+                    { length: endRow - startRow }, 
+                    (_, i) => startRow + i
+                );
+            }
         }
 
-        return selectedIds.length === count ? selectedIds : [];
+        // Select seats from best rows
+        if (bestRows.length > 0) {
+            for (const row of bestRows) {
+                if (remainingCount === 0) break;
+                const availableInRow = seatsByRow[row];
+                const seatsToTake = Math.min(remainingCount, availableInRow.length);
+                selectedSeats = [...selectedSeats, ...availableInRow.slice(0, seatsToTake)];
+                remainingCount -= seatsToTake;
+            }
+        }
+
+        return selectedSeats.length === count ? selectedSeats.map(seat => seat.seat_id) : [];
     }, [seats]);
 
     useEffect(() => {
