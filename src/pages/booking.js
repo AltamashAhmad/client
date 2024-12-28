@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 export default function Booking() {
     const [seats, setSeats] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const { user, logout } = useAuth();
     const router = useRouter();
 
@@ -82,8 +83,36 @@ export default function Booking() {
         }
     };
 
-    const handleLogout = () => {
-        logout();
+    const LogoutConfirmationModal = () => {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                        Confirm Logout
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                        Are you sure you want to logout?
+                    </p>
+                    <div className="flex space-x-4 justify-between">
+                        <button
+                            onClick={() => setShowLogoutModal(false)}
+                            className="w-1/2 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                logout();
+                                setShowLogoutModal(false);
+                            }}
+                            className="w-1/2 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     if (loading) {
@@ -95,16 +124,16 @@ export default function Booking() {
     }
 
     return (
-        <div className="relative min-h-screen bg-gradient-to-b from-gray-800 to-black">
+        <div className="min-h-screen bg-gradient-to-b from-gray-800 to-black">
+            {showLogoutModal && <LogoutConfirmationModal />}
             <div className="absolute top-4 right-4">
                 <button
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutModal(true)}
                     className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-md"
                 >
                     Logout
                 </button>
             </div>
-
             <SeatGrid 
                 seats={seats}
                 onBookSeats={handleBookSeats}
