@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
 import SeatGrid from '../components/SeatGrid';
 import toast from 'react-hot-toast';
+import Footer from '../components/Footer';
+import Layout from '../components/Layout';
 
 export default function Booking() {
     const [seats, setSeats] = useState([]);
@@ -124,7 +126,7 @@ export default function Booking() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-800 to-black">
+        <Layout>
             {showLogoutModal && <LogoutConfirmationModal />}
             <div className="absolute top-4 right-4">
                 <button
@@ -139,6 +141,6 @@ export default function Booking() {
                 onBookSeats={handleBookSeats}
                 onResetAllBookings={handleResetAllBookings}
             />
-        </div>
+        </Layout>
     );
 } 
