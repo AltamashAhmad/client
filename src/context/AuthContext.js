@@ -48,6 +48,9 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password) => {
         try {
+            console.log('Attempting registration with:', { name, email });
+            console.log('API URL:', API_URL);
+            
             const res = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
@@ -55,7 +58,10 @@ export const AuthProvider = ({ children }) => {
                 },
                 body: JSON.stringify({ name, email, password }),
             });
+            
             const data = await res.json();
+            console.log('Registration response:', data);
+            
             if (data.error) throw new Error(data.error);
             
             localStorage.setItem('token', data.token);
@@ -63,6 +69,7 @@ export const AuthProvider = ({ children }) => {
             router.push('/booking');
             return { success: true };
         } catch (error) {
+            console.error('Registration error:', error);
             return { error: error.message };
         }
     };
