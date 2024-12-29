@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/router';
+import { useAuth } from '../context/AuthContext';
 import SeatGrid from '../components/SeatGrid';
 import toast from 'react-hot-toast';
 import Footer from '../components/Footer';
@@ -12,6 +12,8 @@ export default function Booking() {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const { user, logout } = useAuth();
     const router = useRouter();
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -30,58 +32,47 @@ export default function Booking() {
 
     const fetchSeats = async () => {
         try {
-            const response = await fetch('http://localhost:5001/api/booking/seats');
+            const response = await fetch(`${API_URL}/api/booking/seats`);
+            if (!response.ok) throw new Error('Failed to fetch seats');
             const data = await response.json();
             setSeats(data);
         } catch (error) {
             console.error('Failed to fetch seats:', error);
-            toast.error('Failed to load seats');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleBookSeats = async (seatIds) => {
+    const handleReset = async () => {
         try {
-            const response = await fetch('http://localhost:5001/api/booking/book', {
+            const response = await fetch(`${API_URL}/api/booking/reset`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`
-                },
-                body: JSON.stringify({ seatIds })
+                    'Authorization': `Bearer ${user?.token}`
+                }
             });
-
-            const data = await response.json();
-            
-            if (response.ok) {
-                toast.success('Booking successful!');
-                fetchSeats(); // Refresh seats after booking
-            } else {
-                throw new Error(data.error || 'Booking failed');
-            }
+            if (!response.ok) throw new Error('Failed to reset seats');
+            await fetchSeats();
         } catch (error) {
-            toast.error(error.message);
+            console.error('Failed to reset seats:', error);
         }
     };
 
-    const handleResetAllBookings = async () => {
+    const handleBooking = async (seatIds) => {
         try {
-            const response = await fetch('http://localhost:5001/api/booking/reset', {
+            const response = await fetch(`${API_URL}/api/booking/book`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${user.token}`
-                }
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user?.token}`
+                },
+                body: JSON.stringify({ seatIds })
             });
-
-            if (response.ok) {
-                toast.success('All bookings have been reset');
-                fetchSeats(); // Refresh seats after reset
-            } else {
-                throw new Error('Failed to reset bookings');
-            }
+            if (!response.ok) throw new Error('Failed to book seats');
+            await fetchSeats();
         } catch (error) {
-            toast.error(error.message);
+            console.error('Failed to book seats:', error);
         }
     };
 
@@ -138,8 +129,8 @@ export default function Booking() {
             </div>
             <SeatGrid 
                 seats={seats}
-                onBookSeats={handleBookSeats}
-                onResetAllBookings={handleResetAllBookings}
+                onBookSeats={handleBooking}
+                onResetAllBookings={handleReset}
             />
         </Layout>
     );

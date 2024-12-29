@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
     const [seatCount, setSeatCount] = useState('');
     const [previewSeats, setPreviewSeats] = useState([]);
     const [showResetModal, setShowResetModal] = useState(false);
+    const { user } = useAuth();
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
     const findBestAvailableSeats = useCallback((count) => {
         // Group seats by row
@@ -85,13 +89,31 @@ export default function SeatGrid({ seats, onBookSeats, onResetAllBookings }) {
         return 'bg-green-500';
     };
 
-    const handleBookSeats = () => {
-        if (previewSeats.length > 0) {
-            // Call the parent's booking function
-            onBookSeats(previewSeats);
-            // Clear the form
+    const handleBookSeats = async () => {
+        try {
+            const selectedSeats = findBestAvailableSeats(parseInt(seatCount));
+            if (!selectedSeats.length) {
+                toast.error('Could not find suitable seats');
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/api/booking/book`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user?.token}`
+                },
+                body: JSON.stringify({ seatIds: selectedSeats })
+            });
+
+            if (!response.ok) throw new Error('Failed to book seats');
+            
+            onBookSeats();
             setSeatCount('');
-            setPreviewSeats([]);
+            toast.success('Seats booked successfully!');
+        } catch (error) {
+            console.error('Booking error:', error);
+            toast.error(error.message);
         }
     };
 
