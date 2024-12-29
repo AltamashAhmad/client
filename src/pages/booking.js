@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import SeatGrid from '../components/SeatGrid';
@@ -22,15 +22,7 @@ export default function Booking() {
         }
     }, [router]);
 
-    useEffect(() => {
-        if (!user) {
-            router.replace('/login');
-            return;
-        }
-        fetchSeats();
-    }, [user, router]);
-
-    const fetchSeats = async () => {
+    const fetchSeats = useCallback(async () => {
         try {
             const response = await fetch(`${API_URL}/api/booking/seats`);
             if (!response.ok) throw new Error('Failed to fetch seats');
@@ -41,7 +33,15 @@ export default function Booking() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_URL]);
+
+    useEffect(() => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        fetchSeats();
+    }, [user, router, fetchSeats]);
 
     const handleReset = async () => {
         try {
